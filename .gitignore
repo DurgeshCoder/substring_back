@@ -1,0 +1,73 @@
+# Byte-compiled / cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Django migrations
+**/migrations/
+!*/migrations/__init__.py
+
+# SQLite database
+*.sqlite3
+*.db
+
+# Media and static files (optional, if auto-generated or user-uploaded)
+media/
+staticfiles/
+
+# Environment variables and secrets
+.env
+.env.*
+
+# VS Code and other editor files
+.vscode/
+.idea/
+*.swp
+
+# Virtual environment
+venv/
+env/
+ENV/
+.venv/
+
+# Logs
+*.log
+
+# Coverage and testing
+htmlcov/
+.coverage
+.tox/
+.nox/
+.cache/
+.pytest_cache/
+
+# MyPy and other tooling
+.mypy_cache/
+.dmypy.json
+.pyre/
+.pytype/
+
+# Docker-related
+*.pid
+*.tar
+*.bak
+docker-compose.override.yml
+
+# Node modules (if frontend is in same repo)
+node_modules/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# System files
+.DS_Store
+Thumbs.db
+
+.env.development
+.env.production
