@@ -65,7 +65,7 @@ class Blog(models.Model):
     ]
 
     title = models.CharField(max_length=255)
-    slug = models.SlugField(unique=True, blank=True, null=True)
+    slug = models.SlugField(unique=True, blank=True, null=True,max_length=1000)
     short_content = models.TextField(blank=False, null=False)
     content = RichTextUploadingField()
     author = models.ForeignKey(AuthorProfile, on_delete=models.CASCADE, related_name='blogs')

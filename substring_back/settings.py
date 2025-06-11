@@ -163,7 +163,7 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticatedOrReadOnly',
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 10,  # Default number of items per page
+    'PAGE_SIZE': 50,  # Default number of items per page
 }
 
 CKEDITOR_UPLOAD_PATH = "blog_images/"  # Path where uploaded files will be stored
