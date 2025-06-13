@@ -24,7 +24,9 @@ class LessonSerializer(serializers.ModelSerializer):
 class CourseSerializer(serializers.ModelSerializer):
     lessons = LessonSerializer(many=True, read_only=True)
     attachments = AttachmentSerializer(many=True, read_only=True)
-    author = serializers.CharField(source='author.username', read_only=True)
+    # author = serializers.CharField(source='author.username', read_only=True)
+    author = serializers.SerializerMethodField()
+    discount_percentage = serializers.SerializerMethodField()
 
     class Meta:
         model = Course
@@ -39,6 +41,12 @@ class CourseSerializer(serializers.ModelSerializer):
             representation.pop('attachments', None)
             representation.pop('description', None)
         return representation
+
+    def get_author(self, obj):
+        return f"{obj.author.first_name} {obj.author.last_name}".strip()
+
+    def get_discount_percentage(self, obj):
+        return obj.discount_percentage()
 
     def get_thumbnail(self, obj):
         request = self.context.get('request')

@@ -24,14 +24,14 @@ class CourseCategory(models.Model):
 # Course Model
 class Course(models.Model):
     title = models.CharField(max_length=255)
-    slug = models.SlugField(unique=True, blank=True, null=True)
+    slug = models.SlugField(unique=True, blank=True, null=True, max_length=191)
     thumbnail = models.ImageField(upload_to='courses/', blank=True, null=True, validators=[
         DynamicImageValidator(max_size_kb=500, max_width=1920, max_height=1080)])
     short_description = models.TextField(blank=True, null=True)
     description = RichTextUploadingField()
-    price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    discount = models.IntegerField(max_length=10, default=0)
-    numbers_of_lessons = models.IntegerField(max_length=10, default=0)
+    price = models.IntegerField(default=0, help_text="price of the course")
+    discounted_price = models.IntegerField(default=0)
+    numbers_of_lessons = models.CharField(max_length=10, help_text="discounted price of the course")
     is_published = models.BooleanField(default=False)
     is_premium = models.BooleanField(default=False)
 
@@ -42,13 +42,18 @@ class Course(models.Model):
         choices=[('Beginner', 'Beginner'), ('Intermediate', 'Intermediate'), ('Advanced', 'Advanced')],
         default='Beginner'
     )
-    total_duration = models.PositiveIntegerField(default=0, help_text="Total duration in seconds")
+    total_duration = models.CharField(max_length=100, default="0", help_text="Total duration of the course.")
     author = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='courses')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     watch_directly_from_yt = models.BooleanField(default=True)
     youtube_link = models.URLField(blank=True, null=True, default='https://www.youtube.com/@LearnCodeWithDurgesh')
     order = models.IntegerField(default=0)
+
+    def discount_percentage(self):
+        if self.price and self.price != 0:
+            return int((self.discounted_price / self.price) * 100)
+        return 0  # or None or '-' depending on what you'd like to show
 
     def save(self, *args, **kwargs):
         if not self.slug:

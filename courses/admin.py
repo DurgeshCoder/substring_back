@@ -12,27 +12,35 @@ class CourseCategoryAdmin(ModelAdmin):
 
 @admin.register(Course)
 class CourseAdmin(ModelAdmin):
-    list_display = ('title', 'author', 'price', 'is_published', 'is_premium', 'created_at', 'updated_at')
+    list_display = ('title', 'author', 'price', 'is_published', 'is_premium', 'created_at', 'updated_at',
+                    'discount_percentage_display')
     list_filter = ('is_published', 'is_premium', 'categories', 'level', 'author')
     search_fields = ('title', 'short_description', 'description', 'author__username')
     prepopulated_fields = {'slug': ('title',)}
     filter_horizontal = ('categories',)
-    readonly_fields = ('created_at', 'updated_at')
+    readonly_fields = ('created_at', 'updated_at', 'discount_percentage_display')
     fieldsets = (
         ('Basic Information', {
             'fields': (
                 'title', 'thumbnail', 'slug', 'short_description', 'description', 'author', 'categories',
-                'prerequisites', 'level',"numbers_of_lessons")
+                'prerequisites', 'level', "numbers_of_lessons")
         }),
         ('Status', {
             'fields': ('is_published', 'is_premium')
         }),
         ('Additional Information', {
             'fields': (
-                'price' ,"discount",'total_duration', 'created_at', 'updated_at', 'watch_directly_from_yt', 'youtube_link',
+                'price', "discounted_price", "discount_percentage_display", 'total_duration', 'created_at',
+                'updated_at',
+                'watch_directly_from_yt', 'youtube_link',
                 'order')
         }),
     )
+
+    def discount_percentage_display(self, obj):
+        return obj.discount_percentage()
+
+    discount_percentage_display.short_description = 'Discount %'
 
     class Media:
         js = ('js/ck_editor.js',)
