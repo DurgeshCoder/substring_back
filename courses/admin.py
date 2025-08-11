@@ -43,7 +43,7 @@ class CourseAdmin(ModelAdmin):
     discount_percentage_display.short_description = 'Discount %'
 
     class Media:
-        js = ('js/ck_editor.js',)
+        js = ('js/ck_editor_init.js',)
 
 
 @admin.register(Lesson)
@@ -55,7 +55,7 @@ class LessonAdmin(ModelAdmin):
     fields = ('title', 'course', 'video', 'order', 'is_preview', 'description')
 
     class Media:
-        js = ('js/ck_editor.js',)
+        js = ('js/ck_editor_init.js',)
 
 
 @admin.register(Attachment)

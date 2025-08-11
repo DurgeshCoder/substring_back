@@ -4,6 +4,9 @@ from django.db import models
 # Create your models here.
 from django.db import models
 from django.contrib.auth.models import User
+
+from utils.file_upload import append_date_to_filename
+from utils.mixins import FileCleanupMixin
 from utils.validators import DynamicImageValidator, \
     SquareImageWithSizeValidator
 import os
@@ -58,20 +61,22 @@ class Category(models.Model):
 
 
 # blog
-class Blog(models.Model):
+class Blog(FileCleanupMixin, models.Model):
+    file_fields = ['featured_image']
+
     STATUS_CHOICES = [
         ('draft', 'Draft'),
         ('published', 'Published'),
     ]
 
     title = models.CharField(max_length=255)
-    slug = models.SlugField(unique=True, blank=True, null=True,max_length=1000)
+    slug = models.SlugField(unique=True, blank=True, null=True, max_length=1000)
     short_content = models.TextField(blank=False, null=False)
-    content = RichTextUploadingField()
+    content = RichTextUploadingField(config_name="blog")
     author = models.ForeignKey(AuthorProfile, on_delete=models.CASCADE, related_name='blogs')
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='draft')
     categories = models.ManyToManyField(Category, blank=True, related_name='blogs')
-    featured_image = models.ImageField(upload_to='blog_images/', blank=True, null=True,
+    featured_image = models.ImageField(upload_to=append_date_to_filename("blog_images"), blank=True, null=True,
                                        validators=[
                                            DynamicImageValidator(max_size_kb=500, max_width=1920, max_height=1080)])
     is_featured = models.BooleanField(default=False)

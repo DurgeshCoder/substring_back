@@ -3,11 +3,13 @@ from ckeditor_uploader.fields import RichTextUploadingField
 from django.utils.text import slugify
 from django.contrib.auth.models import User
 
+from utils.mixins import FileCleanupMixin
 from utils.validators import DynamicImageValidator
+from utils.file_upload import append_date_to_filename
 
 
 # Course Category Model
-class CourseCategory(models.Model):
+class CourseCategory(FileCleanupMixin, models.Model):
     name = models.CharField(max_length=255)
     slug = models.SlugField(unique=True, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
@@ -22,13 +24,14 @@ class CourseCategory(models.Model):
 
 
 # Course Model
-class Course(models.Model):
+class Course(FileCleanupMixin,models.Model):
+    file_fields = ["thumbnail"]
     title = models.CharField(max_length=255)
     slug = models.SlugField(unique=True, blank=True, null=True, max_length=191)
-    thumbnail = models.ImageField(upload_to='courses/', blank=True, null=True, validators=[
+    thumbnail = models.ImageField(upload_to=append_date_to_filename("courses"), blank=True, null=True, validators=[
         DynamicImageValidator(max_size_kb=500, max_width=1920, max_height=1080)])
     short_description = models.TextField(blank=True, null=True)
-    description = RichTextUploadingField()
+    description = RichTextUploadingField(config_name="course")
     price = models.IntegerField(default=0, help_text="price of the course")
     discounted_price = models.IntegerField(default=0)
     numbers_of_lessons = models.CharField(max_length=10, help_text="discounted price of the course")
@@ -69,7 +72,7 @@ class Course(models.Model):
 
 
 # Lesson Model
-class Lesson(models.Model):
+class Lesson(FileCleanupMixin,models.Model):
     title = models.CharField(max_length=255)
     description = RichTextUploadingField()
     video = models.URLField(blank=True, null=True)
@@ -82,7 +85,8 @@ class Lesson(models.Model):
 
 
 # Attachment Model
-class Attachment(models.Model):
+class Attachment(FileCleanupMixin,models.Model):
+    file_fields = ["file"]
     FILE_TYPES = [
         ('PDF', 'PDF'),
         ('ZIP', 'ZIP'),
@@ -92,7 +96,7 @@ class Attachment(models.Model):
 
     title = models.CharField(max_length=255, help_text="Title of the attachment", default='')
     description = models.TextField(blank=True, null=True)
-    file = models.FileField(upload_to='attachments/')
+    file = models.FileField(upload_to=append_date_to_filename("attachments"))
     file_type = models.CharField(max_length=20, choices=FILE_TYPES, default='OTHER')
     uploaded_at = models.DateTimeField(auto_now_add=True)
     is_paid = models.BooleanField(default=False)

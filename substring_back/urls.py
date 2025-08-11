@@ -24,7 +24,7 @@ from drf_yasg.views import get_schema_view
 from rest_framework.permissions import AllowAny
 
 from substring_back import settings
-from substring_back.views import delete_image
+from substring_back.views import delete_image, ckeditor_custom_upload
 from django.urls import path
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -57,7 +57,9 @@ urlpatterns = [
     re_path(r'^swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
-    path('ckeditor/', include('ckeditor_uploader.urls')),  # CKEditor file upload URLs
+    path('ckeditor/', include('ckeditor_uploader.urls')),
+    path("editor/upload/<str:bucket>/", ckeditor_custom_upload, name="ckeditor_custom_upload"),
+    # CKEditor file upload URLs
     path('ckeditor/delete/', delete_image, name='ckeditor_delete_image'),
 
 ]

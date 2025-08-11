@@ -14,7 +14,7 @@ class BlogAdmin(ModelAdmin):
     list_filter = ('created_at', 'updated_at')
 
     class Media:
-        js = ('js/ck_editor.js',)
+        js = ('js/ck_editor_init.js',)
 
 
 @admin.register(Category)

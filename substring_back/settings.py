@@ -167,17 +167,30 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 50,  # Default number of items per page
 }
 
-CKEDITOR_UPLOAD_PATH = "blog_images/"  # Path where uploaded files will be stored
+CKEDITOR_UPLOAD_PATH = "uploads/editor/"  # Path where uploaded files will be stored
 CKEDITOR_IMAGE_BACKEND = "pillow"  # Use Pillow for image processing
+# CKEDITOR_FILENAME_GENERATOR = "myapp.utils.ckeditor_uploads.append_date_filename"  # optional (below)
 
 CKEDITOR_CONFIGS = {
-    'default': {
+    'blog': {
         'toolbar': 'full',
         'extraPlugins': ','.join(['image', 'codesnippet']),  # Enable image and code snippet plugins
-        'height': 300,
+        'height': 400,
         'width': '100%',
-        'filebrowserUploadUrl': '/ckeditor/upload/',  # URL for file uploads
-        'filebrowserBrowseUrl': '/ckeditor/browse/',  # URL for browsing files
+        'filebrowserUploadUrl': '/editor/upload/blog/',  # URL for file uploads
+        'filebrowserBrowseUrl': '/editor/browse/blog',
+        "imageUploadUrl": '/editor/upload/blog/',
+        # URL for browsing files
+    },
+    'course': {
+        'toolbar': 'full',
+        'extraPlugins': ','.join(['image', 'codesnippet']),  # Enable image and code snippet plugins
+        'height': 400,
+        'width': '100%',
+        'filebrowserUploadUrl': '/editor/upload/course/',  # URL for file uploads
+        'filebrowserBrowseUrl': '/editor/browse/course',
+        "imageUploadUrl": '/editor/upload/course/',
+        # URL for browsing files
     },
 }
 

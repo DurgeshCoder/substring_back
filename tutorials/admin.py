@@ -41,5 +41,5 @@ class TopicAdmin(ModelAdmin):
     )
 
     class Media:
-        js = ('js/ck_editor.js',)
+        js = ('js/ck_editor_init.js',)
 
