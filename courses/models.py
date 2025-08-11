@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 
 from utils.mixins import FileCleanupMixin
 from utils.validators import DynamicImageValidator
-from utils.file_upload import append_date_to_filename
+from utils.file_upload import  AppendDateToFilename
 
 
 # Course Category Model
@@ -28,7 +28,7 @@ class Course(FileCleanupMixin,models.Model):
     file_fields = ["thumbnail"]
     title = models.CharField(max_length=255)
     slug = models.SlugField(unique=True, blank=True, null=True, max_length=191)
-    thumbnail = models.ImageField(upload_to=append_date_to_filename("courses"), blank=True, null=True, validators=[
+    thumbnail = models.ImageField(upload_to=AppendDateToFilename("courses"), blank=True, null=True, validators=[
         DynamicImageValidator(max_size_kb=500, max_width=1920, max_height=1080)])
     short_description = models.TextField(blank=True, null=True)
     description = RichTextUploadingField(config_name="course")
@@ -74,7 +74,7 @@ class Course(FileCleanupMixin,models.Model):
 # Lesson Model
 class Lesson(FileCleanupMixin,models.Model):
     title = models.CharField(max_length=255)
-    description = RichTextUploadingField()
+    description = RichTextUploadingField(config_name="lesson")
     video = models.URLField(blank=True, null=True)
     order = models.PositiveIntegerField(help_text="Order in the course")
     is_preview = models.BooleanField(default=False, help_text="Mark as a free preview")
@@ -96,7 +96,7 @@ class Attachment(FileCleanupMixin,models.Model):
 
     title = models.CharField(max_length=255, help_text="Title of the attachment", default='')
     description = models.TextField(blank=True, null=True)
-    file = models.FileField(upload_to=append_date_to_filename("attachments"))
+    file = models.FileField(upload_to=AppendDateToFilename("attachments"))
     file_type = models.CharField(max_length=20, choices=FILE_TYPES, default='OTHER')
     uploaded_at = models.DateTimeField(auto_now_add=True)
     is_paid = models.BooleanField(default=False)

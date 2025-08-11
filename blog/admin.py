@@ -2,12 +2,17 @@ from django.contrib import admin
 
 # Register your models here.
 from django.contrib import admin
-from .models import Blog, Category, AuthorProfile
-from unfold.admin import ModelAdmin
 
+from utils.admin import GlobalMediaAdmin
+from .models import Blog, Category, AuthorProfile
+
+# Change admin site headers
+admin.site.site_header = "Substring Technologies"
+admin.site.site_title = "My Tutorial Website Portal"
+admin.site.index_title = "Welcome to the Admin Dashboard"
 
 @admin.register(Blog)
-class BlogAdmin(ModelAdmin):
+class BlogAdmin(GlobalMediaAdmin):
     list_display = ('title', 'slug', 'meta_title', 'created_at', 'updated_at')
     prepopulated_fields = {'slug': ('title',)}  # Auto-generate slug in admin
     search_fields = ('title', 'meta_title', 'meta_keywords')
@@ -18,11 +23,11 @@ class BlogAdmin(ModelAdmin):
 
 
 @admin.register(Category)
-class CategoryAdmin(ModelAdmin):
+class CategoryAdmin(admin.ModelAdmin):
     list_display = ('name',)
     prepopulated_fields = {'slug': ('name',)}
 
 
 @admin.register(AuthorProfile)
-class AuthorProfileAdmin(ModelAdmin):
+class AuthorProfileAdmin(admin.ModelAdmin):
     list_display = ('user',)

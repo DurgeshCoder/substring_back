@@ -36,13 +36,9 @@ CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', cast=lambda v: v.split(','
 # Application definition
 
 INSTALLED_APPS = [
+
     'corsheaders',
-    "unfold",
-    "unfold.contrib.forms",  # optional, if special form elements are needed
-    "unfold.contrib.inlines",  # optional, if special inlines are needed
-    "unfold.contrib.import_export",  # optional, if django-import-export package is used
-    "unfold.contrib.guardian",  # optional, if django-guardian package is used
-    "unfold.contrib.simple_history",  # optional, if django-simple-history package is used
+
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -80,7 +76,7 @@ ROOT_URLCONF = 'substring_back.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -192,12 +188,19 @@ CKEDITOR_CONFIGS = {
         "imageUploadUrl": '/editor/upload/course/',
         # URL for browsing files
     },
+    'lesson': {
+        'toolbar': 'full',
+        'extraPlugins': ','.join(['image', 'codesnippet']),  # Enable image and code snippet plugins
+        'height': 400,
+        'width': '100%',
+        'filebrowserUploadUrl': '/editor/upload/lesson/',  # URL for file uploads
+        'filebrowserBrowseUrl': '/editor/browse/lesson',
+        "imageUploadUrl": '/editor/upload/lesson/',
+        # URL for browsing files
+    },
 }
 
-UNFOLD = {
-    "SITE_TITLE": "Substring Back: Admin",
-    "SITE_HEADER": 'Substring Back',
-}
+
 
 SWAGGER_SETTINGS = {
     'SECURITY_DEFINITIONS': {

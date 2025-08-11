@@ -1,17 +1,17 @@
 from django.contrib import admin
-from .models import CourseCategory, Course, Lesson, Attachment
-from unfold.admin import ModelAdmin
 
+from utils.admin import GlobalMediaAdmin
+from .models import CourseCategory, Course, Lesson, Attachment
 
 @admin.register(CourseCategory)
-class CourseCategoryAdmin(ModelAdmin):
+class CourseCategoryAdmin(admin.ModelAdmin):
     list_display = ('name', 'slug')
     search_fields = ('name',)
     prepopulated_fields = {'slug': ('name',)}
 
 
 @admin.register(Course)
-class CourseAdmin(ModelAdmin):
+class CourseAdmin(GlobalMediaAdmin):
     list_display = ('title', 'author', 'price', 'is_published', 'is_premium', 'created_at', 'updated_at',
                     'discount_percentage_display')
     list_filter = ('is_published', 'is_premium', 'categories', 'level', 'author')
@@ -47,7 +47,7 @@ class CourseAdmin(ModelAdmin):
 
 
 @admin.register(Lesson)
-class LessonAdmin(ModelAdmin):
+class LessonAdmin(admin.ModelAdmin):
     list_display = ('title', 'course', 'order', 'is_preview')
     list_filter = ('course', 'is_preview')
     search_fields = ('title', 'description', 'course__title')
@@ -59,7 +59,7 @@ class LessonAdmin(ModelAdmin):
 
 
 @admin.register(Attachment)
-class AttachmentAdmin(ModelAdmin):
+class AttachmentAdmin(admin.ModelAdmin):
     list_display = ('title', 'file', 'file_type', 'course', 'lesson', 'is_paid', 'price', 'uploaded_at')
     list_filter = ('file_type', 'course', 'lesson', 'course__title')
     search_fields = ('file', 'course__title', 'lesson__title')

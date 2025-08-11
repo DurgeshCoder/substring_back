@@ -1,10 +1,9 @@
 from django.contrib import admin
 from .models import Inquiry
-from unfold.admin import ModelAdmin
 
 
 @admin.register(Inquiry)
-class InquiryAdmin(ModelAdmin):
+class InquiryAdmin(admin.ModelAdmin):
     list_display = ('name', 'email', 'type', 'responded', 'responded_by', 'created_at')
     list_filter = ('type', 'responded', 'created_at')
     search_fields = ('name', 'email', 'message', 'responded_by__username')

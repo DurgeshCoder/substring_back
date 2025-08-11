@@ -1,25 +1,17 @@
+# utils/file_upload.py
 import os
 from datetime import datetime
+from django.utils.deconstruct import deconstructible
 
+@deconstructible
+class AppendDateToFilename:
+    def __init__(self, folder_name="uploads", with_time=True):
+        self.folder_name = folder_name
+        self.with_time = with_time
 
-def append_date_to_filename(folder_name="uploads"):
-    """
-    Returns a function that appends the current date to the uploaded file's name.
-    Can be reused in any model.
-
-    Example usage in model:
-        image = models.ImageField(upload_to=append_date_to_filename("images"))
-    """
-
-    def wrapper(instance, filename):
-        # Extract original name and extension
+    def __call__(self, instance, filename):
         name, ext = os.path.splitext(filename)
-
-        # Add current date
-        date_str = datetime.now().strftime("%Y%m%d_%H%M%S")
-        new_filename = f"{name}_{date_str}{ext}"
-
-        # Store in given folder
-        return os.path.join(folder_name, new_filename)
-
-    return wrapper
+        fmt = "%Y%m%d_%H%M%S" if self.with_time else "%Y%m%d"
+        stamp = datetime.now().strftime(fmt)
+        new_name = f"{name}_{stamp}{ext.lower()}"
+        return os.path.join(self.folder_name, new_name).replace("\\", "/")
