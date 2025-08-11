@@ -91,30 +91,3 @@ class Blog(FileCleanupMixin, models.Model):
 
     def __str__(self):
         return self.title
-
-    def save(self, *args, **kwargs):
-        """
-        Handle:
-        1. Delete the old featured image if it exists and is being replaced.
-        2. Save the new featured image.
-        """
-        if self.pk:  # Check if the object already exists
-            try:
-                old_instance = Blog.objects.get(pk=self.pk)
-                # If the new image is different, delete the old image
-                if old_instance.featured_image and old_instance.featured_image != self.featured_image:
-                    if os.path.isfile(old_instance.featured_image.path):
-                        os.remove(old_instance.featured_image.path)
-            except Blog.DoesNotExist:
-                pass  # If the object does not exist, skip deletion logic
-
-        super().save(*args, **kwargs)  # Save the new instance
-
-    def delete(self, *args, **kwargs):
-        """
-        Handle:
-        1. Delete the associated featured image file when the object is deleted.
-        """
-        if self.featured_image and os.path.isfile(self.featured_image.path):
-            os.remove(self.featured_image.path)
-        super().delete(*args, **kwargs)
