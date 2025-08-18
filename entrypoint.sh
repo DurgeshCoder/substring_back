@@ -2,9 +2,9 @@
 
 echo "Waiting for MySQL..."
 
-until mysqladmin ping -h "db" --silent; do
-  sleep 1
-done
+#until mysqladmin ping -h "db" --silent; do
+#  sleep 1
+#done
 
 echo "MySQL started"
 
