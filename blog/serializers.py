@@ -33,11 +33,12 @@ from .models import Blog
 
 class BlogListSerializer(serializers.ModelSerializer):
     featured_image = serializers.ImageField(use_url=True)
+    author = serializers.CharField(source='author.user')  # Use the username field of the related author
 
     class Meta:
         model = Blog
         # Exclude 'content' field for list or featured view
-        exclude = ['content',"categories", 'meta_title', 'meta_description', 'meta_keywords']
+        exclude = ['content',"categories", 'meta_title', 'meta_description', 'meta_keywords',]
 
 
 class CategorySerializer(serializers.ModelSerializer):
