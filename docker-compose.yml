@@ -13,6 +13,11 @@ services:
       - "3307:3306"
     networks:
       - backend
+    healthcheck:
+      test: [ "CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uapp -psecret --silent" ]
+      interval: 10s
+      timeout: 3s
+      retries: 10
 
   web:
     build: .
