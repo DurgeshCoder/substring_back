@@ -102,7 +102,10 @@ DATABASES = {
         'PASSWORD': config('DATABASE_PASSWORD'),
         'HOST': config('DATABASE_HOST', default='localhost'),
         'PORT': config('DATABASE_PORT', default='3306'),
-        "OPTIONS": {"charset": "utf8mb4"},
+        "OPTIONS": {
+            "charset": "utf8mb4",  # recommended for full Unicode/emoji
+            "init_command": "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci",
+        },
 
     }
 }
