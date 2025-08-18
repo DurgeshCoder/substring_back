@@ -31,7 +31,6 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
 
-
 schema_view = get_schema_view(
     openapi.Info(
         title="Substring Back API",
@@ -53,10 +52,6 @@ urlpatterns = [
     path('api/v1/', include('contact.urls')),
     path('api/v1/generate-token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/v1/refresh-token', TokenRefreshView.as_view(), name='token_refresh'),
-
-    re_path(r'^swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),
-    path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
-    path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
     path('ckeditor/', include('ckeditor_uploader.urls')),
     path("editor/upload/<str:bucket>/", ckeditor_custom_upload, name="ckeditor_custom_upload"),
     # CKEditor file upload URLs
@@ -66,3 +61,10 @@ urlpatterns = [
 # Add media files URL configuration
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+if settings.DEBUG:
+    urlpatterns += [
+        re_path(r'^swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),
+        path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+        path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
+        ]
