@@ -19,7 +19,7 @@ class BlogAdmin(GlobalMediaAdmin):
     prepopulated_fields = {'slug': ('title',)}  # Auto-generate slug in admin
     autocomplete_fields = ('categories','author')
     search_fields = ('title', 'meta_title', 'meta_keywords',)
-    list_filter = ('status','created_at', 'updated_at')
+    list_filter = ('status','created_at', 'updated_at','categories')
     ordering = ['-created_at']
 
 
