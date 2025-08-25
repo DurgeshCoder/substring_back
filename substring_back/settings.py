@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_filters',
     'blog',
     'courses',
     'testimonials',
@@ -227,6 +228,16 @@ CKEDITOR_CONFIGS = {
         'filebrowserUploadUrl': '/editor/upload/lesson/',  # URL for file uploads
         'filebrowserBrowseUrl': '/editor/browse/lesson',
         "imageUploadUrl": '/editor/upload/lesson/',
+        # URL for browsing files
+    },
+    'tutorials': {
+        'toolbar': 'full',
+        'extraPlugins': ','.join(['image', 'codesnippet']),  # Enable image and code snippet plugins
+        'height': 400,
+        'width': '100%',
+        'filebrowserUploadUrl': '/editor/upload/tutorials/',  # URL for file uploads
+        'filebrowserBrowseUrl': '/editor/browse/tutorials',
+        "imageUploadUrl": '/editor/upload/tutorials/',
         # URL for browsing files
     },
 }

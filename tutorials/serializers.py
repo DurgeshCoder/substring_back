@@ -24,8 +24,6 @@ class SEOFieldsSerializerMixin(serializers.Serializer):
 # Subject
 # ---------------------------
 class SubjectListSerializer(SEOFieldsSerializerMixin, serializers.ModelSerializer):
-    url = serializers.SerializerMethodField()
-
     class Meta:
         model = Subject
         fields = (
@@ -36,18 +34,12 @@ class SubjectListSerializer(SEOFieldsSerializerMixin, serializers.ModelSerialize
             "meta_title", "meta_description", "meta_keywords",
             "canonical_url", "og_title", "og_description", "og_image",
             # computed
-            "url", "created_at", "updated_at",
+            "created_at", "updated_at",
         )
         read_only_fields = ("created_at", "updated_at")
 
-    def get_url(self, obj) -> str:
-        return obj.get_absolute_url()
-
 
 class SubjectDetailSerializer(SubjectListSerializer):
-    """Detail can additionally include a lightweight list of topics."""
-    topics = serializers.SerializerMethodField()
-
     class Meta(SubjectListSerializer.Meta):
         fields = SubjectListSerializer.Meta.fields + ("topics",)
 
@@ -62,38 +54,29 @@ class SubjectDetailSerializer(SubjectListSerializer):
 # ---------------------------
 class TopicMiniSerializer(serializers.ModelSerializer):
     """Used inside Subject detail or Article detail."""
-    url = serializers.SerializerMethodField()
+
     subject_slug = serializers.CharField(source="subject.slug", read_only=True)
     subject_name = serializers.CharField(source="subject.name", read_only=True)
 
     class Meta:
         model = Topic
-        fields = ("id", "name", "slug", "subject_slug", "subject_name", "position", "is_active", "url")
-
-    def get_url(self, obj) -> str:
-        return obj.get_absolute_url()
+        fields = ("id", "name", "slug", "subject_slug", "subject_name", "position", "is_active")
 
 
-class TopicListSerializer(SEOFieldsSerializerMixin, serializers.ModelSerializer):
-    url = serializers.SerializerMethodField()
+class TopicListSerializer(serializers.ModelSerializer):
     subject = serializers.SlugRelatedField(slug_field="slug", queryset=Subject.objects.all())
 
     class Meta:
         model = Topic
         fields = (
-            "id", "name", "slug", "summary", "cover_image",
+            "id", "name", "slug", "summary",
             "is_active", "position",
             "subject",  # write/read by subject slug
-            # SEO
-            "meta_title", "meta_description", "meta_keywords",
-            "canonical_url", "og_title", "og_description", "og_image",
+
             # computed
-            "url", "created_at", "updated_at",
+            "created_at", "updated_at",
         )
         read_only_fields = ("created_at", "updated_at")
-
-    def get_url(self, obj) -> str:
-        return obj.get_absolute_url()
 
     def validate(self, attrs):
         # Enforce unique (subject, slug) with nice error message
@@ -120,28 +103,23 @@ class TopicDetailSerializer(TopicListSerializer):
     def get_articles(self, obj):
         qs = getattr(obj, "articles", None).all() if hasattr(obj, "articles") else Article.objects.filter(topic=obj)
         qs = qs.order_by("order_in_topic", "-published_at", "title")
-        return ArticleMiniSerializer(qs, many=True, context=self.context).data
+        return ArticleListSerializer(qs, many=True, context=self.context).data
 
 
 # ---------------------------
 # Article
 # ---------------------------
-class ArticleMiniSerializer(serializers.ModelSerializer):
-    url = serializers.SerializerMethodField()
+class ArticleListSerializer(serializers.ModelSerializer):
     topic_slug = serializers.CharField(source="topic.slug", read_only=True)
     subject_slug = serializers.CharField(source="topic.subject.slug", read_only=True)
 
     class Meta:
         model = Article
         fields = ("id", "title", "slug", "status", "order_in_topic", "published_at",
-                  "topic_slug", "subject_slug", "url")
-
-    def get_url(self, obj) -> str:
-        return obj.get_absolute_url()
+                  "topic_slug", "subject_slug",)
 
 
-class ArticleListSerializer(SEOFieldsSerializerMixin, serializers.ModelSerializer):
-    url = serializers.SerializerMethodField()
+class ArticleDetailSerializer(SEOFieldsSerializerMixin, serializers.ModelSerializer):
     topic = serializers.PrimaryKeyRelatedField(queryset=Topic.objects.all())  # safest for writes
     topic_slug = serializers.SlugRelatedField(source="topic", slug_field="slug",
                                               queryset=Topic.objects.all(), required=False, write_only=True)
@@ -164,13 +142,10 @@ class ArticleListSerializer(SEOFieldsSerializerMixin, serializers.ModelSerialize
             "meta_title", "meta_description", "meta_keywords",
             "canonical_url", "og_title", "og_description", "og_image",
             # computed
-            "url", "created_at", "updated_at",
+            "created_at", "updated_at",
             "author",
         )
         read_only_fields = ("created_at", "updated_at", "views", "likes", "reading_minutes")
-
-    def get_url(self, obj) -> str:
-        return obj.get_absolute_url()
 
     def validate(self, attrs):
         # Unique (topic, slug) check with a friendly message
@@ -187,53 +162,25 @@ class ArticleListSerializer(SEOFieldsSerializerMixin, serializers.ModelSerialize
         return attrs
 
 
-class ArticleDetailSerializer(ArticleListSerializer):
-    """Detailed serializer for an article with related context."""
-    topic_info = serializers.SerializerMethodField()
-    subject_info = serializers.SerializerMethodField()
-    related_articles = serializers.SerializerMethodField()
-    author_info = serializers.SerializerMethodField()
+# Serializer for Getting subject--> topics--> articles
+class TopicWithArticlesSerializer(serializers.ModelSerializer):
+    articles = ArticleListSerializer(many=True, read_only=True)
 
-    class Meta(ArticleListSerializer.Meta):
-        fields = ArticleListSerializer.Meta.fields + (
-            "topic_info",
-            "subject_info",
-            "related_articles",
-            "author_info",
-        )
+    class Meta:
+        model = Topic
+        fields = ["id", "name", "slug","is_active", "articles"]
 
-    def get_topic_info(self, obj):
-        topic = obj.topic
-        return {
-            "id": topic.id,
-            "name": topic.name,
-            "slug": topic.slug,
-            "url": topic.get_absolute_url(),
-        }
 
-    def get_subject_info(self, obj):
-        subject = obj.topic.subject
-        return {
-            "id": subject.id,
-            "name": subject.name,
-            "slug": subject.slug,
-            "url": subject.get_absolute_url(),
-        }
+class SubjectWithTopicsSerializer(serializers.ModelSerializer):
+    topics = TopicWithArticlesSerializer(many=True, read_only=True)
 
-    def get_related_articles(self, obj):
-        # Get other published articles from same topic
-        qs = (
-            Article.objects.filter(topic=obj.topic, status="published")
-            .exclude(pk=obj.pk)
-            .order_by("order_in_topic", "-published_at")[:5]
-        )
-        return ArticleMiniSerializer(qs, many=True, context=self.context).data
-
-    def get_author_info(self, obj):
-        if not obj.author:
-            return None
-        return {
-            "id": obj.author.id,
-            "username": getattr(obj.author, "username", ""),
-            "full_name": getattr(obj.author, "get_full_name", lambda: "")(),
-        }
+    class Meta:
+        model = Subject
+        fields = ['name', 'slug', 'topics', "id", "name", "slug", "tagline", "description",
+                  "icon", "cover_image", "visibility", "default_difficulty",
+                  "is_active", "is_featured", "position",
+                  # SEO
+                  "meta_title", "meta_description", "meta_keywords",
+                  "canonical_url", "og_title", "og_description", "og_image",
+                  # computed
+                  "created_at", "updated_at", ]

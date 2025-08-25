@@ -10,6 +10,9 @@ from utils.file_upload import  AppendDateToFilename
 
 # Course Category Model
 class CourseCategory(FileCleanupMixin, models.Model):
+    class Meta:
+        verbose_name_plural = 'Course Categories'
+        
     name = models.CharField(max_length=255)
     slug = models.SlugField(unique=True, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
@@ -24,7 +27,10 @@ class CourseCategory(FileCleanupMixin, models.Model):
 
 
 # Course Model
-class Course(FileCleanupMixin,models.Model):
+class Course(FileCleanupMixin, models.Model):
+    class Meta:
+        verbose_name_plural = 'Courses'
+        
     file_fields = ["thumbnail"]
     title = models.CharField(max_length=255)
     slug = models.SlugField(unique=True, blank=True, null=True, max_length=191)
@@ -34,7 +40,7 @@ class Course(FileCleanupMixin,models.Model):
     description = RichTextUploadingField(config_name="course")
     price = models.IntegerField(default=0, help_text="price of the course")
     discounted_price = models.IntegerField(default=0)
-    numbers_of_lessons = models.CharField(max_length=10, help_text="discounted price of the course")
+    numbers_of_lessons = models.CharField(max_length=10, help_text="number of the lessons in the course")
     is_published = models.BooleanField(default=False)
     is_premium = models.BooleanField(default=False)
 
@@ -72,7 +78,10 @@ class Course(FileCleanupMixin,models.Model):
 
 
 # Lesson Model
-class Lesson(FileCleanupMixin,models.Model):
+class Lesson(FileCleanupMixin, models.Model):
+    class Meta:
+        verbose_name_plural = 'Lessons'
+        
     title = models.CharField(max_length=255)
     description = RichTextUploadingField(config_name="lesson")
     video = models.URLField(blank=True, null=True)
@@ -85,7 +94,10 @@ class Lesson(FileCleanupMixin,models.Model):
 
 
 # Attachment Model
-class Attachment(FileCleanupMixin,models.Model):
+class Attachment(FileCleanupMixin, models.Model):
+    class Meta:
+        verbose_name_plural = 'Attachments'
+        
     file_fields = ["file"]
     FILE_TYPES = [
         ('PDF', 'PDF'),

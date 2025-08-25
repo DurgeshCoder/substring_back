@@ -6,20 +6,20 @@ from .models import Subject, Topic, Article
 
 
 # ---------- Inlines ----------
-class TopicInline(admin.TabularInline):
-    model = Topic
-    extra = 0
-    fields = ("name", "slug", "position", "is_active")
-    prepopulated_fields = {"slug": ("name",)}
-    show_change_link = True
+# class TopicInline(admin.TabularInline):
+#     model = Topic
+#     extra = 0
+#     fields = ("name", "slug", "position", "is_active")
+#     prepopulated_fields = {"slug": ("name",)}
+#     show_change_link = True
+#
 
-
-class ArticleInline(admin.TabularInline):
-    model = Article
-    extra = 0
-    fields = ("title", "slug", "status", "order_in_topic", "is_featured")
-    prepopulated_fields = {"slug": ("title",)}
-    show_change_link = True
+# class ArticleInline(admin.TabularInline):
+#     model = Article
+#     extra = 0
+#     fields = ("title", "slug", "status", "order_in_topic", "is_featured")
+#     prepopulated_fields = {"slug": ("title",)}
+#     show_change_link = True
 
 
 # ---------- Subject ----------
@@ -27,16 +27,14 @@ class ArticleInline(admin.TabularInline):
 class SubjectAdmin(admin.ModelAdmin):
     list_display = (
         "name",
-        "slug",
-        "visibility",
+
+        "position",
+        "updated_at",
         "default_difficulty",
         "is_active",
         "is_featured",
-        "position",
-        "owner",
-        "created_at",
-        "updated_at",
-        "preview_link",
+        "preview_visibility",
+
     )
     list_filter = ("visibility", "default_difficulty", "is_active", "is_featured")
     search_fields = ("name", "slug", "tagline", "description", "meta_title", "meta_description")
@@ -44,8 +42,9 @@ class SubjectAdmin(admin.ModelAdmin):
     list_editable = ("position", "is_active", "is_featured")
     ordering = ("position", "name")
     readonly_fields = ("created_at", "updated_at")
-    inlines = [TopicInline]
+    # inlines = [TopicInline]
     save_on_top = True
+    list_per_page = 20
 
     fieldsets = (
         ("Basic", {
@@ -75,9 +74,10 @@ class SubjectAdmin(admin.ModelAdmin):
         }),
     )
 
-    @admin.display(description="Preview")
-    def preview_link(self, obj):
-        return format_html('<a href="{}" target="_blank">View</a>', obj.get_absolute_url())
+    @admin.display(description="visibility")
+    def preview_visibility(self, obj):
+        return format_html(
+            f'<span style="color:{'green' if obj.visibility == "public" else "red"}">{obj.visibility.title()}</span>')
 
 
 # ---------- Topic ----------
@@ -91,7 +91,7 @@ class TopicAdmin(admin.ModelAdmin):
         "position",
         "created_at",
         "updated_at",
-        "preview_link",
+
     )
     list_filter = ("is_active", "subject")
     search_fields = ("name", "slug", "summary", "meta_title", "meta_description", "subject__name")
@@ -100,7 +100,7 @@ class TopicAdmin(admin.ModelAdmin):
     ordering = ("subject__position", "position", "name")
     readonly_fields = ("created_at", "updated_at")
     autocomplete_fields = ("subject",)
-    inlines = [ArticleInline]
+    # inlines = [ArticleInline]
     save_on_top = True
 
     fieldsets = (
@@ -109,29 +109,17 @@ class TopicAdmin(admin.ModelAdmin):
                 "subject",
                 ("name", "slug"),
                 "summary",
-                "cover_image",
+
                 ("is_active", "position"),
             )
         }),
-        ("SEO", {
-            "classes": ("collapse",),
-            "fields": (
-                "meta_title",
-                "meta_description",
-                "meta_keywords",
-                "canonical_url",
-                ("og_title", "og_description", "og_image"),
-            )
-        }),
+
         ("Timestamps", {
             "classes": ("collapse",),
             "fields": ("created_at", "updated_at"),
         }),
     )
 
-    @admin.display(description="Preview")
-    def preview_link(self, obj):
-        return format_html('<a href="{}" target="_blank">View</a>', obj.get_absolute_url())
 
 
 # ---------- Article ----------
@@ -151,17 +139,11 @@ class ArticleAdmin(admin.ModelAdmin):
         "title",
         "slug",
         "topic",
-        "subject_name",
-        "status",
-        "difficulty",
         "order_in_topic",
-        "is_featured",
-        "published_at",
-        "views",
-        "likes",
-        "created_at",
         "updated_at",
-        "preview_link",
+        "status",
+        "is_featured",
+
     )
     list_filter = ("status", "difficulty", "is_featured", "topic", "topic__subject")
     search_fields = (
@@ -218,6 +200,6 @@ class ArticleAdmin(admin.ModelAdmin):
     def computed_reading_minutes(self, obj):
         return obj.reading_minutes
 
-    @admin.display(description="Preview")
-    def preview_link(self, obj):
-        return format_html('<a href="{}" target="_blank">View</a>', obj.get_absolute_url())
+
+    class Media:
+        js = ('js/ck_editor_init.js',)

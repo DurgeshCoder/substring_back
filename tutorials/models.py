@@ -1,10 +1,16 @@
 from __future__ import annotations
 import re
+
+from ckeditor_uploader.fields import RichTextUploadingField
 from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator, URLValidator
 from django.db import models
 from django.template.defaultfilters import slugify
 from django.urls import reverse
+
+from utils.file_upload import AppendDateToFilename
+from utils.mixins import FileCleanupMixin
+from utils.validators import DynamicImageValidator
 
 
 # ---------------------------
@@ -34,7 +40,8 @@ class SEOFields(models.Model):
 # -------------
 # Core entities
 # -------------
-class Subject(SEOFields, TimeStampedModel):
+class Subject(FileCleanupMixin, SEOFields, TimeStampedModel):
+    file_fields = ['cover_image']
     """
     Top-level learning area (e.g., Java, Python)
     """
@@ -46,7 +53,11 @@ class Subject(SEOFields, TimeStampedModel):
     tagline = models.CharField(max_length=200, blank=True)
     description = models.TextField(blank=True)
     icon = models.CharField(max_length=120, blank=True, help_text="Icon class or emoji")
-    cover_image = models.CharField(max_length=400, blank=True, help_text="URL or media key")
+    cover_image = models.ImageField(upload_to=AppendDateToFilename("tutorials/subjects/cover_images", with_time=True),
+                                    blank=True,
+                                    validators=[
+                                        DynamicImageValidator(max_size_kb=500, max_width=1920, max_height=1080)],
+                                    help_text="Cover image for subjects page")
     visibility = models.CharField(max_length=10, choices=VISIBILITY, default="public", db_index=True)
     default_difficulty = models.CharField(max_length=12, choices=DIFFICULTY, default="beginner")
     is_active = models.BooleanField(default=True, db_index=True)
@@ -71,11 +82,11 @@ class Subject(SEOFields, TimeStampedModel):
             self.slug = slugify(self.name)
         super().save(*args, **kwargs)
 
-    def get_absolute_url(self) -> str:
-        return reverse("subject.detail", kwargs={"subject_slug": self.slug})
+
+    # Topic model
 
 
-class Topic(SEOFields, TimeStampedModel):
+class Topic(TimeStampedModel):
     """
     Section within a subject (e.g., Core Basics, OOPs)
     """
@@ -83,12 +94,12 @@ class Topic(SEOFields, TimeStampedModel):
     name = models.CharField(max_length=160)
     slug = models.SlugField(max_length=180, help_text="Unique within subject")
     summary = models.TextField(blank=True)
-    cover_image = models.CharField(max_length=400, blank=True)
+    # cover_image = models.CharField(max_length=400, blank=True)
     is_active = models.BooleanField(default=True, db_index=True)
     position = models.PositiveIntegerField(default=0, db_index=True)
 
     class Meta:
-        unique_together = (("subject", "slug"),)   # keeps URLs clean within a subject
+        unique_together = (("subject", "slug"),)  # keeps URLs clean within a subject
         ordering = ["subject__position", "position", "name"]
         indexes = [
             models.Index(fields=["subject", "position"]),
@@ -103,14 +114,10 @@ class Topic(SEOFields, TimeStampedModel):
             self.slug = slugify(self.name)
         super().save(*args, **kwargs)
 
-    def get_absolute_url(self) -> str:
-        return reverse("topic.detail", kwargs={
-            "subject_slug": self.subject.slug,
-            "topic_slug": self.slug,
-        })
 
 
 class Article(SEOFields, TimeStampedModel):
+    file_fields = ['cover_image']
     """
     A lesson/page inside a Topic.
     """
@@ -133,11 +140,14 @@ class Article(SEOFields, TimeStampedModel):
 
     # Content — choose one of the following depending on your editor:
     # If using CKEditor/Quill and storing HTML:
-    content_html = models.TextField(help_text="Rendered HTML content")
+    content_html = RichTextUploadingField(help_text="Rendered HTML content", config_name="tutorials")
 
     # Optional extras:
     excerpt = models.TextField(blank=True)
-    cover_image = models.CharField(max_length=400, blank=True)
+    cover_image = models.ImageField(upload_to=AppendDateToFilename("tutorials/articles/cover_images", with_time=True),
+                                    validators=[
+                                        DynamicImageValidator(max_size_kb=500, max_width=1920, max_height=1080)],
+                                    help_text="Cover image for articles page")
     reading_minutes = models.PositiveIntegerField(
         null=True, blank=True, validators=[MinValueValidator(1), MaxValueValidator(120)],
         help_text="Estimated reading time (minutes)"
@@ -171,10 +181,3 @@ class Article(SEOFields, TimeStampedModel):
             words = len([w for w in text.split() if w.strip()])
             self.reading_minutes = max(1, round(words / 200))
         super().save(*args, **kwargs)
-
-    def get_absolute_url(self) -> str:
-        return reverse("article.detail", kwargs={
-            "subject_slug": self.topic.subject.slug,
-            "topic_slug": self.topic.slug,
-            "article_slug": self.slug,
-        })

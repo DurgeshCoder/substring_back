@@ -96,7 +96,7 @@ class BlogViewSet(ModelViewSet):
         """
         Custom action to retrieve featured blogs.
         """
-        featured_blogs = Blog.objects.filter(is_featured=True, status='published').order_by('-created_at')
+        featured_blogs = Blog.objects.filter(is_featured=True, status='published').order_by('-created_at')[0:6]
         page = self.paginate_queryset(featured_blogs)
 
         serializer = BlogListSerializer(page or featured_blogs, many=True, context={"request": request})

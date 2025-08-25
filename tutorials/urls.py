@@ -9,5 +9,5 @@ router.register(r"topics", TopicViewSet, basename="topics")
 router.register(r"articles", ArticleViewSet, basename="articles")
 
 urlpatterns = [
-    path("api/", include(router.urls)),
+    path('', include(router.urls)),
 ]
