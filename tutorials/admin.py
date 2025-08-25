@@ -76,9 +76,9 @@ class SubjectAdmin(admin.ModelAdmin):
 
     @admin.display(description="visibility")
     def preview_visibility(self, obj):
-        return format_html(
-            f'<span style="color:{'green' if obj.visibility == "public" else "red"}">{obj.visibility.title()}</span>')
-
+        color = "green" if obj.visibility == "public" else "red"
+        html = f'<span style="color:{color}">{obj.visibility.title()}</span>'
+        return html
 
 # ---------- Topic ----------
 @admin.register(Topic)
