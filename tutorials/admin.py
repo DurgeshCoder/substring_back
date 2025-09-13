@@ -27,7 +27,6 @@ from .models import Subject, Topic, Article
 class SubjectAdmin(admin.ModelAdmin):
     list_display = (
         "name",
-
         "position",
         "updated_at",
         "default_difficulty",
@@ -78,7 +77,7 @@ class SubjectAdmin(admin.ModelAdmin):
     def preview_visibility(self, obj):
         color = "green" if obj.visibility == "public" else "red"
         html = f'<span style="color:{color}">{obj.visibility.title()}</span>'
-        return html
+        return format_html(html)
 
 # ---------- Topic ----------
 @admin.register(Topic)
@@ -94,7 +93,7 @@ class TopicAdmin(admin.ModelAdmin):
 
     )
     list_filter = ("is_active", "subject")
-    search_fields = ("name", "slug", "summary", "meta_title", "meta_description", "subject__name")
+    search_fields = ("name", "slug", "summary",  "subject__name")
     prepopulated_fields = {"slug": ("name",)}
     list_editable = ("position", "is_active")
     ordering = ("subject__position", "position", "name")
@@ -137,7 +136,6 @@ def mark_draft(modeladmin, request, queryset):
 class ArticleAdmin(admin.ModelAdmin):
     list_display = (
         "title",
-        "slug",
         "topic",
         "order_in_topic",
         "updated_at",
@@ -145,7 +143,7 @@ class ArticleAdmin(admin.ModelAdmin):
         "is_featured",
 
     )
-    list_filter = ("status", "difficulty", "is_featured", "topic", "topic__subject")
+    list_filter = ("topic__subject","status", "difficulty", "is_featured",  )
     search_fields = (
         "title",
         "slug",
@@ -158,10 +156,11 @@ class ArticleAdmin(admin.ModelAdmin):
     )
     prepopulated_fields = {"slug": ("title",)}
     list_editable = ("order_in_topic", "is_featured")
-    ordering = ("topic__position", "order_in_topic", "-published_at", "title")
+    ordering = ("-created_at","topic__position", "order_in_topic", "-published_at", "title")
     readonly_fields = ("created_at", "updated_at", "computed_reading_minutes")
     autocomplete_fields = ("topic", "author")
     save_on_top = True
+    list_per_page = 20
     actions = [mark_published, mark_draft]
     list_select_related = ("topic", "topic__subject", "author")
 
