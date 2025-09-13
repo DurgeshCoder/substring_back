@@ -1,5 +1,7 @@
 # admin.py
+from django import forms
 from django.contrib import admin
+from django.contrib.admin import SimpleListFilter
 from django.utils.html import format_html
 
 from .models import Subject, Topic, Article
@@ -20,6 +22,39 @@ from .models import Subject, Topic, Article
 #     fields = ("title", "slug", "status", "order_in_topic", "is_featured")
 #     prepopulated_fields = {"slug": ("title",)}
 #     show_change_link = True
+
+
+# TOPIC FILTER
+class TopicFilter(SimpleListFilter):
+    title = "topic"
+    parameter_name = "topic__id__exact"  # matches admin FK filter naming
+
+    def lookups(self, request, model_admin):
+        """
+        Return (value, label) pairs for the dropdown.
+        We read the selected subject from the request GET params and
+        limit topics to that subject if present.
+        """
+        # default param for a FK field named 'subject' is 'subject__id__exact'
+        subject_pk = request.GET.get("topic__subject__id__exact") or request.GET.get("subject")
+
+        qs = Topic.objects.all()
+        if subject_pk:
+            qs = qs.filter(subject_id=subject_pk)
+            # You can further order or limit results
+            return [(str(t.pk), str(t)) for t in qs.order_by("name")]
+        else:
+            return []
+
+    def queryset(self, request, queryset):
+        """
+        Filter the queryset when a topic is selected.
+        Admin will pass the selected value as self.value().
+        """
+        val = self.value()
+        if val:
+            return queryset.filter(topic_id=val)
+        return queryset
 
 
 # ---------- Subject ----------
@@ -79,6 +114,7 @@ class SubjectAdmin(admin.ModelAdmin):
         html = f'<span style="color:{color}">{obj.visibility.title()}</span>'
         return format_html(html)
 
+
 # ---------- Topic ----------
 @admin.register(Topic)
 class TopicAdmin(admin.ModelAdmin):
@@ -93,7 +129,7 @@ class TopicAdmin(admin.ModelAdmin):
 
     )
     list_filter = ("is_active", "subject")
-    search_fields = ("name", "slug", "summary",  "subject__name")
+    search_fields = ("name", "slug", "summary", "subject__name")
     prepopulated_fields = {"slug": ("name",)}
     list_editable = ("position", "is_active")
     ordering = ("subject__position", "position", "name")
@@ -132,8 +168,11 @@ def mark_draft(modeladmin, request, queryset):
     queryset.update(status="draft")
 
 
+
+
 @admin.register(Article)
 class ArticleAdmin(admin.ModelAdmin):
+
     list_display = (
         "title",
         "topic",
@@ -143,7 +182,7 @@ class ArticleAdmin(admin.ModelAdmin):
         "is_featured",
 
     )
-    list_filter = ("topic__subject","status", "difficulty", "is_featured",  )
+    list_filter = ("topic__subject", TopicFilter, "status", "difficulty", "is_featured",)
     search_fields = (
         "title",
         "slug",
@@ -156,7 +195,7 @@ class ArticleAdmin(admin.ModelAdmin):
     )
     prepopulated_fields = {"slug": ("title",)}
     list_editable = ("order_in_topic", "is_featured")
-    ordering = ("-created_at","topic__position", "order_in_topic", "-published_at", "title")
+    ordering = ("-created_at", "topic__position", "order_in_topic", "-published_at", "title")
     readonly_fields = ("created_at", "updated_at", "computed_reading_minutes")
     autocomplete_fields = ("topic", "author")
     save_on_top = True
@@ -198,7 +237,6 @@ class ArticleAdmin(admin.ModelAdmin):
     @admin.display(description="Reading (min)")
     def computed_reading_minutes(self, obj):
         return obj.reading_minutes
-
 
     class Media:
         js = ('js/ck_editor_init.js',)

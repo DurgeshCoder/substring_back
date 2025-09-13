@@ -82,7 +82,6 @@ class Subject(FileCleanupMixin, SEOFields, TimeStampedModel):
             self.slug = slugify(self.name)
         super().save(*args, **kwargs)
 
-
     # Topic model
 
 
@@ -106,14 +105,13 @@ class Topic(TimeStampedModel):
             models.Index(fields=["is_active"]),
         ]
 
-    def __str__(self) -> str:
+    def __str__(self):
         return f"{self.subject.name} → {self.name}"
 
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = slugify(self.name)
         super().save(*args, **kwargs)
-
 
 
 class Article(SEOFields, TimeStampedModel):
