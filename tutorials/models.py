@@ -145,7 +145,7 @@ class Article(SEOFields, TimeStampedModel):
     cover_image = models.ImageField(upload_to=AppendDateToFilename("tutorials/articles/cover_images", with_time=True),
                                     validators=[
                                         DynamicImageValidator(max_size_kb=500, max_width=1920, max_height=1080)],
-                                    help_text="Cover image for articles page")
+                                    help_text="Cover image for articles page",blank=True)
     reading_minutes = models.PositiveIntegerField(
         null=True, blank=True, validators=[MinValueValidator(1), MaxValueValidator(120)],
         help_text="Estimated reading time (minutes)"
