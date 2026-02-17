@@ -24,7 +24,7 @@ from drf_yasg.views import get_schema_view
 from rest_framework.permissions import AllowAny
 
 from substring_back import settings
-from substring_back.views import delete_image, ckeditor_custom_upload
+from substring_back.views import delete_image, ckeditor_custom_upload, CustomTokenObtainPairView, UserDetailView
 from django.urls import path
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -45,17 +45,22 @@ schema_view = get_schema_view(
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/v1/users', UserDetailView.as_view()),
     path('api/v1/', include('blog.urls')),
     path('api/v1/', include('courses.urls')),
     path('api/v1/', include('tutorials.urls')),
     path('api/v1/', include('testimonials.urls')),
     path('api/v1/', include('contact.urls')),
-    path('api/v1/generate-token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    # endpoint for generate token
+    path('api/v1/login/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
+    # endpoint for refresh token
     path('api/v1/refresh-token', TokenRefreshView.as_view(), name='token_refresh'),
     path('ckeditor/', include('ckeditor_uploader.urls')),
     path("editor/upload/<str:bucket>/", ckeditor_custom_upload, name="ckeditor_custom_upload"),
+    path("api/v1/editor/upload/<str:bucket>/", ckeditor_custom_upload, name="ckeditor_custom_upload"),
     # CKEditor file upload URLs
     path('ckeditor/delete/', delete_image, name='ckeditor_delete_image'),
+    path('api/v1/ckeditor/delete/', delete_image, name='ckeditor_delete_image'),
 
 ]
 # Add media files URL configuration
@@ -67,4 +72,4 @@ if settings.DEBUG:
         re_path(r'^swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),
         path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
         path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
-        ]
+    ]

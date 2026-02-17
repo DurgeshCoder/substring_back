@@ -69,6 +69,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'substring_back.middleware.GlobalAPIDelayMiddleware'
 ]
 
 # settings.py
@@ -165,6 +166,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 if settings.DEBUG:
     REST_FRAMEWORK = {
+        # for jwt authentication
         'DEFAULT_AUTHENTICATION_CLASSES': [
             'rest_framework_simplejwt.authentication.JWTAuthentication',
         ],
@@ -172,7 +174,7 @@ if settings.DEBUG:
             'rest_framework.permissions.IsAuthenticatedOrReadOnly',
         ],
         'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-        'PAGE_SIZE': 50,  # Default number of items per page
+        'PAGE_SIZE': 20,  # Default number of items per page
         "DEFAULT_RENDERER_CLASSES": (
             "rest_framework.renderers.JSONRenderer",
             "rest_framework.renderers.BrowsableAPIRenderer",
@@ -180,6 +182,7 @@ if settings.DEBUG:
     }
 else:
     REST_FRAMEWORK = {
+        # for jwt authentication
         'DEFAULT_AUTHENTICATION_CLASSES': [
             'rest_framework_simplejwt.authentication.JWTAuthentication',
         ],
@@ -187,7 +190,7 @@ else:
             'rest_framework.permissions.IsAuthenticatedOrReadOnly',
         ],
         'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-        'PAGE_SIZE': 50,  # Default number of items per page
+        'PAGE_SIZE': 20,  # Default number of items per page
         "DEFAULT_RENDERER_CLASSES": (
             "rest_framework.renderers.JSONRenderer",
         )
@@ -195,6 +198,21 @@ else:
 
 # END of rest framework configurations
 
+
+# Simple jwt setting authentication
+from datetime import timedelta
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    "AUTH_HEADER_TYPES": ("Bearer",),
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
+}
+
+# END
+
+
+#CK Editor settings
 CKEDITOR_UPLOAD_PATH = "uploads/editor/"  # Path where uploaded files will be stored
 CKEDITOR_IMAGE_BACKEND = "pillow"  # Use Pillow for image processing
 # CKEDITOR_FILENAME_GENERATOR = "myapp.utils.ckeditor_uploads.append_date_filename"  # optional (below)
@@ -264,3 +282,5 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = '8eb18a001@smtp-brevo.com'
 EMAIL_HOST_PASSWORD = 'JOQF5Z7Epym1WXPR'  # Not your login password
 DEFAULT_FROM_EMAIL = "tech.substring@gmail.com"
+
+#END

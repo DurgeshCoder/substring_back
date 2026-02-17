@@ -4,13 +4,34 @@ from io import BytesIO
 
 from PIL import Image, UnidentifiedImageError
 from django.conf import settings
+from django.contrib.auth.models import User
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.http import JsonResponse, HttpResponseBadRequest, HttpResponse
 import json
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
+from rest_framework_simplejwt.views import TokenObtainPairView
 
+from substring_back.serializers import CustomTokenObtainPairSerializer, UserSerializer
+from rest_framework import generics, filters
+
+
+class UserDetailView(generics.ListAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['username', 'email']
+
+
+# Generate token view
+
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer
+
+
+# END
 
 @csrf_exempt
 def delete_image(request):

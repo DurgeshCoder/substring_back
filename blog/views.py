@@ -7,8 +7,8 @@ from rest_framework.response import Response
 
 # Create your views here.
 from rest_framework.viewsets import ModelViewSet
-from .models import Blog, Category
-from .serializers import BlogSerializer, CategorySerializer, BlogListSerializer
+from .models import Blog, Category, AuthorProfile
+from .serializers import BlogSerializer, CategorySerializer, BlogListSerializer, AuthorProfileSerializer
 from rest_framework.pagination import PageNumberPagination
 
 
@@ -50,21 +50,14 @@ class BlogViewSet(ModelViewSet):
             .prefetch_related("categories")  # if ManyToMany
         )
 
+        user = self.request.user
+
+        # if admin
+        if user.is_authenticated and user.is_staff:
+            return qs.order_by("-created_at")
+
         # default to published unless user asks otherwise
-        status_param = self.request.query_params.get("status")
-        if not status_param:
-            qs = qs.filter(status="published")
-
-        # optional extra OR search field (if you want custom logic)
-        # DRF's SearchFilter already covers ?search=...,
-        # but here’s how to layer custom behavior if needed:
-        s = self.request.query_params.get("search_extra")
-        if s:
-            qs = qs.filter(Q(title__icontains=s) | Q(content__icontains=s))
-
-        # avoid dupes when filtering through M2M
-        return qs.distinct()
-
+        return qs.filter(status="published").order_by("-created_at")
     @action(detail=False, methods=['get'], url_path='slug/(?P<slug>[^/.]+)')
     def blog_by_slug(self, request, slug=None):
         """
@@ -123,3 +116,12 @@ class BlogViewSet(ModelViewSet):
 class CategoryViewSet(ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    search_fields = ["name", "slug"]
+    ordering_fields = ["name", "slug"]
+    ordering = ["name"]
+
+
+class AuthorViewSet(ModelViewSet):
+    queryset = AuthorProfile.objects.all()
+    serializer_class = AuthorProfileSerializer
