@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from django.db.models import Prefetch, Count
+from django.shortcuts import get_object_or_404
 from jinja2.utils import consume
 from rest_framework import viewsets, permissions
 from rest_framework.decorators import action
@@ -28,12 +29,7 @@ class ReadOnlyOrStaff(permissions.BasePermission):
 
 
 # ---------- Subject ----------
-class SubjectViewSet(viewsets.ModelViewSet):
-    """
-    /api/subjects/                (GET list, POST create)
-    /api/subjects/<slug>/         (GET retrieve, PATCH/PUT, DELETE)
-    """
-    lookup_field = "slug"  # match your URL docs; avoids extra PK lookups
+class SubjectViewSet(viewsets.ModelViewSet):  # match your URL docs; avoids extra PK lookups
     permission_classes = [ReadOnlyOrStaff]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ["visibility", "is_active", "is_featured"]
@@ -41,49 +37,18 @@ class SubjectViewSet(viewsets.ModelViewSet):
     ordering_fields = ["position", "name", "created_at", "updated_at"]
 
     def get_queryset(self):
-        base_qs = Subject.objects.all().order_by("position", "name")
-
-        # Keep column set lean for list
-        if self.action == "list":
-            qs = base_qs.only(
-                "id", "slug", "name", "tagline", "position", "is_active", "is_featured"
-            ).annotate(topic_count=Count("topics"))
-            # Light prefetch: just what's needed by TopicMiniSerializer (id, slug, name, position)
-            qs = qs.prefetch_related(
-                Prefetch(
-                    "topics",
-                    queryset=Topic.objects.only("id", "slug", "name", "position", "subject_id")
-                    .filter(is_active=True)
-                    .order_by("position", "name"),
-                )
-            )
-            return qs
-
-        # For retrieve and custom "full" action, load a bit more
-        if self.action in {"retrieve", "full"}:
-            qs = base_qs.only(
-                "id", "slug", "name", "tagline", "description",
-                "meta_title", "meta_description", "position", "is_active", "is_featured"
-            )
-            # Prefetch topics (and optionally their articles for "full", see action below)
-            qs = qs.prefetch_related(
-                Prefetch(
-                    "topics",
-                    queryset=Topic.objects.select_related("subject")
-                    .only("id", "slug", "name", "summary", "position", "is_active", "subject_id")
-                    .order_by("position", "name"),
-                )
-            )
-            return qs
-
-        # Writes / other actions – no heavy prefetch
-        return base_qs
+        user = self.request.user
+        if user.is_authenticated and user.is_staff:
+            return Subject.objects.all().order_by(
+                "-created_at")
+        return Subject.objects.prefetch_related("topics").filter(is_active=True, visibility='public').order_by(
+            "-created_at")
 
     def get_serializer_class(self):
         return SubjectDetailSerializer if self.action == "retrieve" else SubjectListSerializer
 
     @action(detail=True, methods=["get"])
-    def topics(self, request, slug=None):
+    def topics(self, request, pk=None):
         """GET /api/subjects/<slug>/topics/ — list topics under a subject."""
         subject = self.get_object()
         qs = (
@@ -94,7 +59,7 @@ class SubjectViewSet(viewsets.ModelViewSet):
         serializer = TopicMiniSerializer(qs, many=True, context=self.get_serializer_context())
         return Response(serializer.data)
 
-    @action(detail=True, methods=["get"], url_path="with-topics-and-articles")
+    @action(detail=False, methods=["get"], url_path="slug/(?P<slug>[^/.]+)")
     def full(self, request, slug=None):
         """
         GET /api/subjects/<slug>/with-topics-and-articles
@@ -102,7 +67,7 @@ class SubjectViewSet(viewsets.ModelViewSet):
         """
         # Re-fetch current object with deeper prefetch for this endpoint
         subject = (
-            Subject.objects.filter(pk=self.get_object().pk)
+            Subject.objects.filter(slug=slug, is_active=True)
             .prefetch_related(
                 Prefetch(
                     "topics",
@@ -111,7 +76,7 @@ class SubjectViewSet(viewsets.ModelViewSet):
                     ).prefetch_related(
                         Prefetch(
                             "articles",
-                            queryset=Article.objects.select_related("author", "topic", "topic__subject")
+                            queryset=Article.objects
                             .only(
                                 "id", "slug", "title", "excerpt", "order_in_topic",
                                 "published_at", "is_featured", "topic_id", "author_id"
@@ -135,7 +100,7 @@ class TopicViewSet(viewsets.ModelViewSet):
     Tips:
       - Filter by subject via ?subject=<subject-slug>
     """
-    lookup_field = "slug"
+
     permission_classes = [ReadOnlyOrStaff]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ["is_active", "subject"]
@@ -143,32 +108,18 @@ class TopicViewSet(viewsets.ModelViewSet):
     ordering_fields = ["position", "name", "created_at", "updated_at"]
 
     def get_queryset(self):
-        base = Topic.objects.select_related("subject").order_by(
-            "subject__position", "position", "name"
-        )
-
-        # Friendly filter by subject slug if provided
-        subject_slug = self.request.query_params.get("subject") or self.kwargs.get("subject_slug")
-        if subject_slug:
-            base = base.filter(subject__slug=subject_slug)
-
-        if self.action == "list":
-            return base.only(
-                "id", "slug", "name", "summary", "position", "is_active", "subject_id"
+        if self.request.user.is_authenticated and self.request.user.is_staff:
+            return Topic.objects.select_related("subject").order_by(
+                "-created_at"
+                "-updated_at"
             )
-        # retrieve
-        return base.only(
-            "id", "slug", "name", "summary", "position", "is_active", "subject_id",
-
-        )
+        return Topic.objects.select_related("subject").filter(is_active=True).order_by("-created_at", "-updated_at")
 
     def get_serializer_class(self):
-        print("getting topic serializer")
-        print(self.action)
         return TopicDetailSerializer if self.action == "retrieve" else TopicListSerializer
 
     @action(detail=True, methods=["get"])
-    def articles(self, request, slug=None):
+    def articles(self, request, pk=None):
         """GET /api/topics/<slug>/articles/ — list articles in this topic."""
         topic = self.get_object()
         qs = (
@@ -196,47 +147,28 @@ class ArticleViewSet(viewsets.ModelViewSet):
       ?featured=true
     """
     permission_classes = [ReadOnlyOrStaff]
-    lookup_field = "slug"
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ["status", "difficulty", "is_featured", "topic"]
     search_fields = ["title", "slug", "excerpt", "content_html", "meta_title", "meta_description"]
     ordering_fields = ["order_in_topic", "published_at", "created_at", "updated_at", "views", "likes"]
 
+    # getting article by slug
+    # /slug/<slug>
+    @action(detail=False, methods=["get"], url_path="slug/(?P<slug>[^/.]+)")
+    def by_slug(self, request, slug=None):
+        article = get_object_or_404(
+            self.get_queryset(),
+            slug=slug,
+        )
+
+        serializer = ArticleDetailSerializer(article, context=self.get_serializer_context())
+        return Response(serializer.data)
+
     def get_queryset(self):
-        base = (
-            Article.objects.select_related("topic", "topic__subject", "author")
-            .order_by("topic__position", "order_in_topic", "-published_at", "title")
-        )
-
-        # Friendly filters by slugs
-        subject_slug = self.request.query_params.get("subject") or self.kwargs.get("subject_slug")
-        if subject_slug:
-            base = base.filter(topic__subject__slug=subject_slug)
-
-        topic_slug = self.request.query_params.get("topic") or self.kwargs.get("topic_slug")
-        if topic_slug:
-            base = base.filter(topic__slug=topic_slug)
-
-        featured = self.request.query_params.get("featured")
-        if featured in ("true", "1", "yes"):
-            base = base.filter(is_featured=True)
-
-        # Narrow columns: list vs retrieve
-        if self.action == "list":
-            return base.only(
-                "id", "slug", "title", "excerpt", "order_in_topic",
-                "published_at", "status", "difficulty", "is_featured",
-                "views", "likes",
-                "topic_id", "author_id"
-            )
-        # retrieve
-        return base.only(
-            "id", "slug", "title", "excerpt", "content_html",
-            "order_in_topic", "published_at", "created_at", "updated_at",
-            "status", "difficulty", "is_featured", "views", "likes",
-            "meta_title", "meta_description",
-            "topic_id", "author_id"
-        )
+        if self.request.user and self.request.user.is_staff:
+            return Article.objects.select_related("topic", "topic__subject", "author").order_by("-published_at")
+        return Article.objects.select_related("topic", "topic__subject", "author").filter(status="published").order_by(
+            "-published_at")
 
     def get_serializer_class(self):
         return ArticleDetailSerializer if self.action == "retrieve" else ArticleListSerializer

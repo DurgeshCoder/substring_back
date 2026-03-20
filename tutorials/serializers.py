@@ -27,6 +27,7 @@ class SubjectListSerializer(SEOFieldsSerializerMixin, serializers.ModelSerialize
     class Meta:
         model = Subject
         fields = (
+
             "id", "name", "slug", "tagline", "description",
             "icon", "cover_image", "visibility", "default_difficulty",
             "is_active", "is_featured", "position",
@@ -35,6 +36,7 @@ class SubjectListSerializer(SEOFieldsSerializerMixin, serializers.ModelSerialize
             "canonical_url", "og_title", "og_description", "og_image",
             # computed
             "created_at", "updated_at",
+            
         )
         read_only_fields = ("created_at", "updated_at")
 
@@ -64,14 +66,14 @@ class TopicMiniSerializer(serializers.ModelSerializer):
 
 
 class TopicListSerializer(serializers.ModelSerializer):
-    subject = serializers.SlugRelatedField(slug_field="slug", queryset=Subject.objects.all())
+    subject_slug = serializers.CharField(source="subject.slug", read_only=True)
 
     class Meta:
         model = Topic
         fields = (
             "id", "name", "slug", "summary",
             "is_active", "position",
-            "subject",  # write/read by subject slug
+            "subject_slug",  # write/read by subject slug
 
             # computed
             "created_at", "updated_at",
@@ -120,19 +122,15 @@ class ArticleListSerializer(serializers.ModelSerializer):
 
 
 class ArticleDetailSerializer(SEOFieldsSerializerMixin, serializers.ModelSerializer):
-    topic = serializers.PrimaryKeyRelatedField(queryset=Topic.objects.all())  # safest for writes
-    topic_slug = serializers.SlugRelatedField(source="topic", slug_field="slug",
-                                              queryset=Topic.objects.all(), required=False, write_only=True)
     subject_slug = serializers.CharField(source="topic.subject.slug", read_only=True)
-    reading_minutes = serializers.IntegerField(read_only=True)
+    author_name=serializers.CharField(read_only=True,source="author.first_name")
 
     class Meta:
         model = Article
         fields = (
             "id", "title", "slug",
             "status", "difficulty",
-            "topic",  # write by PK
-            "topic_slug",  # optional write by topic slug (global uniqueness not guaranteed!)
+            "topic",
             "subject_slug",  # read-only convenience
             "excerpt", "cover_image",
             "reading_minutes", "order_in_topic", "is_featured",
@@ -144,11 +142,11 @@ class ArticleDetailSerializer(SEOFieldsSerializerMixin, serializers.ModelSeriali
             # computed
             "created_at", "updated_at",
             "author",
+            "author_name"
         )
         read_only_fields = ("created_at", "updated_at", "views", "likes", "reading_minutes")
 
     def validate(self, attrs):
-        # Unique (topic, slug) check with a friendly message
         title = attrs.get("title") or getattr(self.instance, "title", None)
         slug = attrs.get("slug") or (slugify(title) if title else None) or getattr(self.instance, "slug", None)
         topic = attrs.get("topic") or getattr(self.instance, "topic", None)
@@ -168,7 +166,7 @@ class TopicWithArticlesSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Topic
-        fields = ["id", "name", "slug","is_active", "articles"]
+        fields = ["id", "name", "slug", "is_active", "articles"]
 
 
 class SubjectWithTopicsSerializer(serializers.ModelSerializer):
